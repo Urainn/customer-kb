@@ -597,6 +597,8 @@
       雲端資料會自動載入；非管理模式只存本機
       <span class="cloud-mode readonly" id="cloudMode">唯讀模式</span>
       <span class="cloud-status" id="cloudStatus">準備同步...</span>
+      <button class="cloud-reload" id="cloudModeToggle" onclick="toggleCloudAdmin()">切換管理模式</button>
+      <button class="cloud-reload" onclick="manualUploadCloud()">上傳到雲端</button>
       <button class="cloud-reload" onclick="reloadFromCloud()">重新從雲端載入</button>
     </div>
   </div>
@@ -762,9 +764,27 @@ function updateCloudModeBadge() {
   const el = document.getElementById('cloudMode');
   if(!el) return;
   const admin = canWriteCloud();
-  el.textContent = admin ? '管理模式：會同步雲端' : '唯讀模式：只存本機';
+  el.textContent = admin ? '管理模式：可手動上傳雲端' : '唯讀模式：只存本機';
   el.classList.toggle('admin', admin);
   el.classList.toggle('readonly', !admin);
+  const btn = document.getElementById('cloudModeToggle');
+  if(btn) btn.textContent = admin ? '切回唯讀模式' : '切換管理模式';
+}
+
+function toggleCloudAdmin() {
+  if(canWriteCloud()) {
+    localStorage.removeItem(CLOUD_ADMIN_KEY);
+    clearTimeout(cloudSaveTimer);
+    updateCloudModeBadge();
+    setCloudStatus('已切回唯讀模式：修改只存本機');
+    return;
+  }
+
+  const ok = confirm('切換成管理模式後，仍然不會自動上傳；只有按「上傳到雲端」才會更新雲端。確定要開啟嗎？');
+  if(!ok) return;
+  localStorage.setItem(CLOUD_ADMIN_KEY, '1');
+  updateCloudModeBadge();
+  setCloudStatus('管理模式已開啟：修改先存本機，按上傳才同步雲端');
 }
 
 function loadDB() {
@@ -875,6 +895,24 @@ async function uploadCloudNow() {
   setCloudStatus(`雲端已同步 ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`);
 }
 
+async function manualUploadCloud() {
+  if(!canWriteCloud()) {
+    showToast('請先切換管理模式');
+    setCloudStatus('唯讀模式：不能上傳雲端');
+    return;
+  }
+  const ok = confirm('確定要把目前這台電腦的問答、圖片、筆記上傳到雲端嗎？這會覆蓋目前雲端版本。');
+  if(!ok) return;
+  try {
+    await uploadCloudNow();
+    showToast('已上傳到雲端');
+  } catch(err) {
+    console.error(err);
+    setCloudStatus('上傳失敗，請稍後再試', true);
+    showToast('上傳失敗');
+  }
+}
+
 function scheduleCloudSave() {
   if(!cloudReady) return;
   if(!canWriteCloud()) {
@@ -882,13 +920,7 @@ function scheduleCloudSave() {
     return;
   }
   clearTimeout(cloudSaveTimer);
-  setCloudStatus('等待同步...');
-  cloudSaveTimer = setTimeout(() => {
-    uploadCloudNow().catch(err => {
-      console.error(err);
-      setCloudStatus('雲端同步失敗，仍已存本機', true);
-    });
-  }, 900);
+  setCloudStatus('管理模式：已存本機，按「上傳到雲端」才會同步');
 }
 
 async function reloadFromCloud() {
@@ -915,12 +947,10 @@ async function initCloudSync() {
     if(hasBackupContent(cloudData)) {
       applyCloudData(cloudData, canWriteCloud());
       cloudReady = true;
-      if(canWriteCloud()) await uploadCloudNow();
-      else setCloudStatus('唯讀模式：已載入雲端');
+      setCloudStatus(canWriteCloud() ? '管理模式：已載入雲端，按上傳才會同步' : '唯讀模式：已載入雲端');
     } else {
       cloudReady = true;
-      if(canWriteCloud()) await uploadCloudNow();
-      else setCloudStatus('唯讀模式：雲端目前沒有資料');
+      setCloudStatus(canWriteCloud() ? '管理模式：雲端目前沒有資料，按上傳可建立' : '唯讀模式：雲端目前沒有資料');
     }
   } catch(err) {
     console.error(err);
