@@ -750,6 +750,7 @@ const CLOUD_EDIT_KEY = 'cs_cloud_edit_mode_v1';
 const PRIVATE_BACKUP_KEY = 'cs_private_backup_v1';
 let cloudReady = false;
 let cloudSaveTimer = null;
+let privateBackupData = null;
 
 if(location.hash === '#admin') {
   localStorage.setItem(CLOUD_ADMIN_KEY, '1');
@@ -938,10 +939,19 @@ async function startCloudEdit() {
   const ok = confirm('會先備份目前本機資料，然後載入雲端資料讓你編輯。你的本機私用資料不會被上傳。要繼續嗎？');
   if(!ok) return;
   try {
-    localStorage.setItem(PRIVATE_BACKUP_KEY, JSON.stringify(currentBackupData()));
+    privateBackupData = JSON.parse(JSON.stringify(currentBackupData()));
+    try {
+      localStorage.setItem(PRIVATE_BACKUP_KEY, JSON.stringify({
+        qa: privateBackupData.qa || [],
+        notes: privateBackupData.notes || [],
+        images: []
+      }));
+    } catch(e) {}
     localStorage.setItem(CLOUD_EDIT_KEY, '1');
     updateCloudModeBadge();
-    await reloadFromCloud();
+    const cloudData = await loadCloudData();
+    if(!hasBackupContent(cloudData)) throw new Error('empty cloud data');
+    applyCloudData(cloudData, false);
     setCloudStatus('正在編輯雲端資料：修改後按「上傳到雲端」');
     showToast('已載入雲端資料');
   } catch(err) {
@@ -954,14 +964,14 @@ async function startCloudEdit() {
 
 function restorePrivateLocal() {
   const raw = localStorage.getItem(PRIVATE_BACKUP_KEY);
-  if(!raw) {
+  if(!privateBackupData && !raw) {
     showToast('沒有可恢復的本機備份');
     return;
   }
   const ok = confirm('確定要恢復剛才備份的本機資料嗎？目前畫面上的雲端編輯內容會被本機備份取代。');
   if(!ok) return;
   try {
-    const data = JSON.parse(raw);
+    const data = privateBackupData || JSON.parse(raw);
     applyCloudData(data, false);
     localStorage.removeItem(CLOUD_EDIT_KEY);
     updateCloudModeBadge();
