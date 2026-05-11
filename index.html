@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客服知識庫</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #e2ddd6;
+    --border2: #ccc8c0;
+    --text: #1a1814;
+    --text2: #6b6560;
+    --text3: #a09a94;
+    --accent: #2d5a3d;
+    --accent-light: #e8f2ec;
+    --accent-text: #1a3d28;
+    --warn: #8b4513;
+    --warn-light: #fdf0e8;
+    --purple: #4a3f7a;
+    --purple-light: #edeaf7;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 10;
+  }
+
+  .main {
+    margin-left: 260px;
+    flex: 1;
+    padding: 32px 40px;
+    max-width: calc(100vw - 260px);
+  }
+
+  /* ── Sidebar ── */
+  .sidebar-brand {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-brand h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .sidebar-brand p {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  .sidebar-search {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-search input {
+    width: 100%;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .sidebar-search input:focus { border-color: var(--accent); }
+
+  .sidebar-nav {
+    padding: 10px 10px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .nav-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 10px 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text2);
+    transition: background 0.12s, color 0.12s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--accent-light); color: var(--accent-text); font-weight: 500; }
+  .nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-item .count {
+    margin-left: auto;
+    font-size: 10px;
+    background: var(--border);
+    color: var(--text2);
+    padding: 1px 6px;
+    border-radius: 99px;
+  }
+  .nav-item.active .count { background: var(--accent); color: white; }
+
+  .sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .cloud-status {
+    display: block;
+    margin-top: 4px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .cloud-mode {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .cloud-mode.admin {
+    background: var(--warn-light);
+    color: var(--warn);
+  }
+  .cloud-mode.readonly {
+    background: var(--accent-light);
+    color: var(--accent-text);
+  }
+  .cloud-reload {
+    margin-top: 8px;
+    padding: 4px 8px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text2);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .cloud-reload:hover { background: var(--bg); color: var(--text); }
+
+  /* ── Main ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-header h2 { font-size: 22px; font-weight: 700; color: var(--text); }
+  .page-header p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+  .btn {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+  }
+  .btn:hover { background: var(--bg); }
+  .btn-green {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .btn-green:hover { background: var(--accent-text); }
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+  .btn-copy {
+    background: var(--accent-light);
+    color: var(--accent-text);
+    border-color: #b8d9c4;
+  }
+  .btn-copy:hover { background: #d0ebd9; }
+
+  /* ── Search bar ── */
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .search-bar input {
+    flex: 1;
+    padding: 11px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .search-bar input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45,90,61,0.1);
+  }
+
+  /* ── Add panel ── */
+  .add-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    display: none;
+    animation: slideDown 0.15s ease;
+  }
+  .add-panel.open { display: block; }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+  .add-panel h3 { font-size: 14px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; }
+  .form-row input, .form-row textarea, .form-row select {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+  }
+  .form-row input:focus, .form-row textarea:focus, .form-row select:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+  .form-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+  /* ── Cards ── */
+  .results-header {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .card:hover {
+    border-color: var(--border2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .card-q {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .card-a {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-meta { display: flex; align-items: center; gap: 8px; }
+  .tag {
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 99px;
+    font-weight: 500;
+  }
+  .tag-default { background: var(--purple-light); color: var(--purple); }
+  .tag-ai { background: var(--warn-light); color: var(--warn); }
+  .card-date { font-size: 11px; color: var(--text3); }
+  .card-actions { display: flex; gap: 6px; }
+  .hl { background: #ffe066; color: #5a3e00; border-radius: 3px; padding: 0 2px; }
+
+  /* ── AI box ── */
+  .ai-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .ai-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .ai-badge {
+    font-size: 11px;
+    background: var(--warn-light);
+    color: var(--warn);
+    padding: 2px 9px;
+    border-radius: 99px;
+    font-weight: 500;
+  }
+  .ai-note { font-size: 11px; color: var(--text3); }
+  .ai-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.75;
+    white-space: pre-wrap;
+    margin-bottom: 12px;
+  }
+  .ai-loading { color: var(--text3); font-size: 13px; }
+  .ai-actions { display: flex; gap: 8px; }
+
+  /* ── Empty ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+  .empty p { font-size: 13px; margin-top: 8px; }
+
+  /* ── Stats page ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--text); }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .tag-cloud-item {
+    padding: 5px 14px;
+    border-radius: 99px;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .tag-cloud-item:hover { background: var(--accent-light); color: var(--accent-text); border-color: #b8d9c4; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--accent);
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.2s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── Page visibility ── */
+  .page { display: none; }
+  .page.active { display: block; }
+  /* ── Image grid ── */
+  .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .img-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .img-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .img-card img { width: 100%; height: 120px; object-fit: cover; display: block; background: var(--bg); }
+  .img-card-footer { padding: 8px 10px; }
+  .img-name { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+  .img-actions { display: flex; gap: 5px; }
+  .img-drop-active { border-color: var(--accent) !important; background: var(--accent-light) !important; }
+
+  /* ── Hover Preview ── */
+  .img-preview {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    background: rgba(0,0,0,0.75);
+    border-radius: var(--radius);
+    padding: 6px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: pvIn 0.15s ease;
+  }
+  .img-preview.open { display: block; }
+  @keyframes pvIn { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+  .img-preview img {
+    max-width: 720px;
+    max-height: 720px;
+    object-fit: contain;
+    display: block;
+    border-radius: 6px;
+  }
+  .img-preview-name {
+    color: white;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 720px;
+  }
+  .img-card img { cursor: default; }
+
+  /* ── Notes ── */
+  .note-card {
+    background: #fffdf0;
+    border: 1px solid #e8e0b0;
+    border-left: 3px solid #d4b800;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: box-shadow 0.15s;
+  }
+  .note-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .note-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .note-body { font-size: 13px; color: var(--text2); line-height: 1.7; white-space: pre-wrap; }
+  .note-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .note-date { font-size: 11px; color: var(--text3); }
+  .note-actions { display: flex; gap: 6px; }
+  .note-edit-area { background: #fffdf0; border: 1px solid #d4b800; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .note-edit-area input, .note-edit-area textarea {
+    width: 100%; padding: 8px 10px; font-size: 13px; font-family: inherit;
+    border: 1px solid #e0d888; border-radius: var(--radius-sm);
+    background: white; color: var(--text); outline: none; resize: none;
+    margin-bottom: 8px;
+  }
+  .note-edit-area input:focus, .note-edit-area textarea:focus { border-color: #d4b800; }
+
+  .export-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(26,24,20,0.36);
+    padding: 20px;
+  }
+  .export-backdrop.open { display: flex; }
+  .export-dialog {
+    width: min(420px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 18px 60px rgba(0,0,0,0.22);
+    padding: 20px;
+  }
+  .export-dialog h3 { font-size: 16px; margin-bottom: 4px; color: var(--text); }
+  .export-dialog p { font-size: 12px; color: var(--text2); margin-bottom: 14px; }
+  .export-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .export-option input { width: 16px; height: 16px; accent-color: var(--accent); }
+  .export-option strong { display: block; font-size: 13px; color: var(--text); }
+  .export-option span { display: block; font-size: 11px; color: var(--text3); }
+  .export-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+</style>
+</head>
+<body>
+<script>
+// Allow localStorage on file:// by catching errors gracefully
+(function(){
+  try { localStorage.setItem('_test','1'); localStorage.removeItem('_test'); }
+  catch(e) {
+    // Polyfill localStorage with in-memory fallback
+    const mem = {};
+    Object.defineProperty(window, 'localStorage', { value: {
+      getItem: k => mem[k] ?? null,
+      setItem: (k,v) => { mem[k] = String(v); },
+      removeItem: k => { delete mem[k]; },
+      clear: () => { for(let k in mem) delete mem[k]; }
+    }, writable: false });
+  }
+})();
+</script>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h1>客服知識庫</h1>
+      <p>直播系統問答管理</p>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" id="sideSearch" placeholder="快速搜尋..." oninput="sidebarSearch()">
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-label">功能</div>
+      <div class="nav-item active" onclick="goPage('search')" id="nav-search">
+        <span class="icon">🔍</span> 搜尋 / 查詢
+      </div>
+      <div class="nav-item" onclick="goPage('all')" id="nav-all">
+        <span class="icon">📚</span> 所有問答
+        <span class="count" id="totalCount">0</span>
+      </div>
+      <div class="nav-item" onclick="goPage('add')" id="nav-add">
+        <span class="icon">✏️</span> 新增問答
+      </div>
+      <div class="nav-item" onclick="goPage('images')" id="nav-images">
+        <span class="icon">🖼</span> 圖片庫
+        <span class="count" id="imgCount">0</span>
+      </div>
+      <div class="nav-label" style="margin-top:8px">分類</div>
+      <div id="tagNav"></div>
+      <div class="nav-label" style="margin-top:8px">其他</div>
+      <div class="nav-item" onclick="goPage('notes')" id="nav-notes">
+        <span class="icon">📝</span> 我的筆記
+      </div>
+      <div class="nav-item" onclick="goPage('stats')" id="nav-stats">
+        <span class="icon">📊</span> 統計
+      </div>
+      <div class="nav-item" onclick="exportData()" id="nav-export">
+        <span class="icon">💾</span> 備份匯出
+      </div>
+      <div class="nav-item" onclick="document.getElementById('importFile').click()">
+        <span class="icon">📂</span> 匯入備份
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      雲端資料會自動載入；非管理模式只存本機
+      <span class="cloud-mode readonly" id="cloudMode">唯讀模式</span>
+      <span class="cloud-status" id="cloudStatus">準備同步...</span>
+      <button class="cloud-reload" onclick="reloadFromCloud()">重新從雲端載入</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Search page -->
+    <div class="page active" id="page-search">
+      <div class="page-header">
+        <div>
+          <h2>搜尋問答</h2>
+          <p>輸入關鍵字，找到過去的回答或讓 AI 草擬回覆</p>
+        </div>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="mainSearch" placeholder="輸入關鍵字（例如：斷線、留言、匯出訂單）..." oninput="doSearch()" autofocus>
+      </div>
+      <div id="searchResults"></div>
+    </div>
+
+    <!-- All page -->
+    <div class="page" id="page-all">
+      <div class="page-header">
+        <div>
+          <h2>所有問答</h2>
+          <p id="allSubtitle">共 0 筆</p>
+        </div>
+        <button class="btn btn-green" onclick="goPage('add')">+ 新增問答</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="allSearch" placeholder="篩選..." oninput="renderAll()">
+      </div>
+      <div id="allResults"></div>
+    </div>
+
+    <!-- Add page -->
+    <div class="page" id="page-add">
+      <div class="page-header">
+        <div>
+          <h2>新增問答</h2>
+          <p>把以前回答過的問題存進來，下次直接找</p>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:600px">
+        <div class="form-row">
+          <label>賣家問的問題 *</label>
+          <textarea id="addQ" rows="2" placeholder="例如：為什麼我的留言沒有被抓到？"></textarea>
+        </div>
+        <div class="form-row">
+          <label>你的回答 *</label>
+          <textarea id="addA" rows="4" placeholder="例如：請確認直播設定為公開，並確認關鍵字格式正確..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>分類標籤</label>
+          <input type="text" id="addTag" placeholder="例如：連線問題、訂單、設定（可自由輸入）">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-green" onclick="saveEntry()">儲存到知識庫</button>
+          <button class="btn" onclick="clearAddForm()">清空</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats page -->
+    <div class="page" id="page-stats">
+      <div class="page-header">
+        <div><h2>統計</h2><p>知識庫使用狀況</p></div>
+      </div>
+      <div id="statsContent"></div>
+    </div>
+
+    <!-- Images page -->
+    <div class="page" id="page-images">
+      <div class="page-header">
+        <div>
+          <h2>圖片庫</h2>
+          <p>上傳圖片後可搜尋檔名，找到後一鍵複製到剪貼簿</p>
+        </div>
+      </div>
+      <div id="imgDropZone" style="border:2px dashed var(--border2);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;margin-bottom:20px;transition:border-color 0.15s,background 0.15s" onclick="document.getElementById('imgFileInput').click()" ondragover="imgDragOver(event)" ondragleave="imgDragLeave(event)" ondrop="imgDrop(event)">
+        <div style="font-size:32px;margin-bottom:8px">🖼</div>
+        <div style="font-size:14px;font-weight:500;color:var(--text2)">拖曳圖片到這裡，或點擊上傳</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">支援 JPG、PNG、GIF、WebP，可一次多選</div>
+        <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none" onchange="imgFileSelected(event)">
+      </div>
+      <div class="search-bar">
+        <input type="text" id="imgSearch" placeholder="搜尋圖片檔名..." oninput="renderImages()">
+      </div>
+      <div id="imgResults"></div>
+    </div>
+
+    <!-- Notes page -->
+    <div class="page" id="page-notes">
+      <div class="page-header">
+        <div>
+          <h2>我的筆記</h2>
+          <p>個人備忘，不會被搜尋到</p>
+        </div>
+        <button class="btn btn-green" onclick="addNote()">+ 新增筆記</button>
+      </div>
+      <div id="notesArea"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="export-backdrop" id="exportDialog" onclick="if(event.target===this) closeExportDialog()">
+  <div class="export-dialog">
+    <h3>選擇備份內容</h3>
+    <p>可以只匯出其中一種，也可以一次備份全部資料。</p>
+    <label class="export-option">
+      <input type="checkbox" id="exportQA" checked>
+      <span><strong>問答知識庫</strong><span id="exportQACount">0 筆問答</span></span>
+    </label>
+    <label class="export-option">
+      <input type="checkbox" id="exportImages" checked>
+      <span><strong>圖片庫</strong><span id="exportImageCount">0 張圖片</span></span>
+    </label>
+    <label class="export-option">
+      <input type="checkbox" id="exportNotes" checked>
+      <span><strong>我的筆記</strong><span id="exportNoteCount">0 則筆記</span></span>
+    </label>
+    <div class="export-actions">
+      <button class="btn" onclick="closeExportDialog()">取消</button>
+      <button class="btn btn-green" onclick="downloadSelectedExport()">匯出</button>
+    </div>
+  </div>
+</div>
+
+<div class="img-preview" id="imgPreview">
+  <img id="previewImg" src="" alt="">
+  <div class="img-preview-name" id="previewName"></div>
+</div>
+
+<script>
+// ── Storage ──────────────────────────────────────────────
+const STORAGE_KEY = 'cs_kb_v1';
+const SUPABASE_URL = 'https://ylnhcdwcodpjavprnvpa.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_TvH2Tm568Wy-Tnag5Je45A_kj8NLahl';
+const CLOUD_TABLE = 'kb_data';
+const CLOUD_ROW_ID = 'main';
+const CLOUD_ADMIN_KEY = 'cs_cloud_admin_v1';
+let cloudReady = false;
+let cloudSaveTimer = null;
+
+if(location.hash === '#admin') {
+  localStorage.setItem(CLOUD_ADMIN_KEY, '1');
+  history.replaceState(null, '', location.pathname + location.search);
+}
+if(location.hash === '#readonly') {
+  localStorage.removeItem(CLOUD_ADMIN_KEY);
+  history.replaceState(null, '', location.pathname + location.search);
+}
+
+function canWriteCloud() {
+  return localStorage.getItem(CLOUD_ADMIN_KEY) === '1';
+}
+
+function updateCloudModeBadge() {
+  const el = document.getElementById('cloudMode');
+  if(!el) return;
+  const admin = canWriteCloud();
+  el.textContent = admin ? '管理模式：會同步雲端' : '唯讀模式：只存本機';
+  el.classList.toggle('admin', admin);
+  el.classList.toggle('readonly', !admin);
+}
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : defaultDB();
+  } catch(e) { return defaultDB(); }
+}
+
+function saveDB() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch(e) {}
+  scheduleCloudSave();
+}
+
+function setCloudStatus(text, isError=false) {
+  const el = document.getElementById('cloudStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.style.color = isError ? '#9b1c1c' : 'var(--accent)';
+}
+
+function currentBackupData() {
+  return {
+    qa: db || [],
+    images: typeof imgDB !== 'undefined' ? imgDB : [],
+    notes: typeof notesDB !== 'undefined' ? notesDB : []
+  };
+}
+
+function hasBackupContent(data) {
+  return !!data && (
+    (Array.isArray(data.qa) && data.qa.length) ||
+    (Array.isArray(data.images) && data.images.length) ||
+    (Array.isArray(data.notes) && data.notes.length)
+  );
+}
+
+function saveAllLocalOnly() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch(e) {}
+  try { localStorage.setItem(IMG_KEY, JSON.stringify(imgDB)); } catch(e) {}
+  try { localStorage.setItem(NOTES_KEY, JSON.stringify(notesDB)); } catch(e) {}
+}
+
+function mergeById(primary, secondary) {
+  const merged = Array.isArray(primary) ? [...primary] : [];
+  (Array.isArray(secondary) ? secondary : []).forEach(item => {
+    if(!merged.find(x => String(x.id) === String(item.id))) merged.push(item);
+  });
+  return merged;
+}
+
+function refreshCurrentPage() {
+  updateSidebar();
+  updateImgCount();
+  if(currentPage === 'all') renderAll();
+  if(currentPage === 'search') doSearch();
+  if(currentPage === 'stats') renderStats();
+  if(currentPage === 'images') renderImages();
+  if(currentPage === 'notes') renderNotes();
+}
+
+function applyCloudData(data, mergeLocal=false) {
+  const local = currentBackupData();
+  db = (mergeLocal ? mergeById(data.qa, local.qa) : (Array.isArray(data.qa) ? data.qa : [])).sort((a,b)=>(b.id||0)-(a.id||0));
+  imgDB = mergeLocal ? mergeById(data.images, local.images) : (Array.isArray(data.images) ? data.images : []);
+  notesDB = (mergeLocal ? mergeById(data.notes, local.notes) : (Array.isArray(data.notes) ? data.notes : [])).sort((a,b)=>(b.id||0)-(a.id||0));
+  nextId = db.length ? Math.max(...db.map(e=>Number(e.id)||0)) + 1 : 1;
+  saveAllLocalOnly();
+  refreshCurrentPage();
+}
+
+function cloudHeaders(extra={}) {
+  return {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    ...extra
+  };
+}
+
+async function loadCloudData() {
+  const url = `${SUPABASE_URL}/rest/v1/${CLOUD_TABLE}?select=data&id=eq.${encodeURIComponent(CLOUD_ROW_ID)}&limit=1`;
+  const res = await fetch(url, { headers: cloudHeaders() });
+  if(!res.ok) throw new Error(`load failed ${res.status}`);
+  const rows = await res.json();
+  return rows[0]?.data || null;
+}
+
+async function uploadCloudNow() {
+  if(!canWriteCloud()) {
+    setCloudStatus('唯讀模式：已存本機，未上傳雲端');
+    return;
+  }
+  const payload = {
+    id: CLOUD_ROW_ID,
+    data: currentBackupData(),
+    updated_at: new Date().toISOString()
+  };
+  const url = `${SUPABASE_URL}/rest/v1/${CLOUD_TABLE}?on_conflict=id`;
+  setCloudStatus('雲端同步中...');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: cloudHeaders({ Prefer: 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error(`save failed ${res.status}`);
+  const t = new Date();
+  setCloudStatus(`雲端已同步 ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`);
+}
+
+function scheduleCloudSave() {
+  if(!cloudReady) return;
+  if(!canWriteCloud()) {
+    setCloudStatus('唯讀模式：已存本機，未上傳雲端');
+    return;
+  }
+  clearTimeout(cloudSaveTimer);
+  setCloudStatus('等待同步...');
+  cloudSaveTimer = setTimeout(() => {
+    uploadCloudNow().catch(err => {
+      console.error(err);
+      setCloudStatus('雲端同步失敗，仍已存本機', true);
+    });
+  }, 900);
+}
+
+async function reloadFromCloud() {
+  setCloudStatus('重新載入雲端中...');
+  try {
+    const cloudData = await loadCloudData();
+    if(hasBackupContent(cloudData)) {
+      applyCloudData(cloudData, false);
+      setCloudStatus(canWriteCloud() ? '管理模式：已載入雲端' : '唯讀模式：已載入雲端');
+    } else {
+      setCloudStatus('雲端目前沒有資料', true);
+    }
+  } catch(err) {
+    console.error(err);
+    setCloudStatus('雲端載入失敗', true);
+  }
+}
+
+async function initCloudSync() {
+  updateCloudModeBadge();
+  setCloudStatus('連接雲端中...');
+  try {
+    const cloudData = await loadCloudData();
+    if(hasBackupContent(cloudData)) {
+      applyCloudData(cloudData, canWriteCloud());
+      cloudReady = true;
+      if(canWriteCloud()) await uploadCloudNow();
+      else setCloudStatus('唯讀模式：已載入雲端');
+    } else {
+      cloudReady = true;
+      if(canWriteCloud()) await uploadCloudNow();
+      else setCloudStatus('唯讀模式：雲端目前沒有資料');
+    }
+  } catch(err) {
+    console.error(err);
+    setCloudStatus('雲端未連線，已存本機', true);
+  }
+}
+
+function defaultDB() {
+  return [
+    { id:1, q:'為什麼我的留言沒有被系統抓到？', a:'請確認FB直播設定為「公開」，並確認關鍵字格式正確（例如：+1、+商品編號）。如果設定正確還是沒抓到，請重新整理頁面並重新連接FB授權。', tag:'留言問題', date:'2024/04/20' },
+    { id:2, q:'系統突然斷線怎麼辦？', a:'請重新整理頁面，然後到「設定」→「FB連結」重新授權一次。授權時請確認是用管理員帳號登入，不要用個人帳號。', tag:'連線問題', date:'2024/04/19' },
+    { id:3, q:'直播結束後怎麼匯出訂單？', a:'直播結束後進入「訂單管理」，點右上角的「匯出CSV」即可下載本場所有訂單明細，可以直接用Excel開啟。', tag:'訂單', date:'2024/04/18' },
+    { id:4, q:'得標通知的文字可以自訂嗎？', a:'可以，進入「直播設定」→「通知範本」就可以自行編輯得標通知的文字內容。', tag:'設定', date:'2024/04/17' },
+    { id:5, q:'可以同時開兩場直播嗎？', a:'目前每個帳號同時只支援一場直播。如果需要同時多場，請聯繫我們了解升級方案。', tag:'設定', date:'2024/04/16' },
+    { id:6, q:'賣家忘記輸入+1可以補單嗎？', a:'可以，在直播結束後進入「訂單管理」→「手動新增」，填入賣家資訊和商品編號即可補單。', tag:'訂單', date:'2024/04/15' },
+  ];
+}
+
+let db = loadDB();
+let nextId = db.length ? Math.max(...db.map(e=>e.id)) + 1 : 1;
+
+// ── Navigation ───────────────────────────────────────────
+let currentPage = 'search';
+
+function goPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const navEl = document.getElementById('nav-' + page);
+  if(navEl) navEl.classList.add('active');
+  currentPage = page;
+  if(page === 'all') renderAll();
+  if(page === 'stats') renderStats();
+  if(page === 'images') renderImages();
+  if(page === 'notes') renderNotes();
+  updateSidebar();
+}
+
+function sidebarSearch() {
+  const q = document.getElementById('sideSearch').value.trim();
+  document.getElementById('mainSearch').value = q;
+  goPage('search');
+  doSearch();
+}
+
+// ── Sidebar ──────────────────────────────────────────────
+function updateSidebar() {
+  document.getElementById('totalCount').textContent = db.length;
+  const tags = [...new Set(db.map(e=>e.tag).filter(Boolean))];
+  document.getElementById('tagNav').innerHTML = tags.map(t => {
+    const c = db.filter(e=>e.tag===t).length;
+    return `<div class="nav-item" onclick="filterByTag('${t}')">
+      <span class="icon">🏷</span> ${t}
+      <span class="count">${c}</span>
+    </div>`;
+  }).join('');
+}
+
+function filterByTag(tag) {
+  document.getElementById('allSearch').value = tag;
+  goPage('all');
+  renderAll();
+}
+
+// ── Search ───────────────────────────────────────────────
+function doSearch() {
+  const kw = document.getElementById('mainSearch').value.trim();
+  const area = document.getElementById('searchResults');
+  if(!kw) { area.innerHTML = '<div class="empty"><div style="font-size:32px">🔍</div><p>輸入關鍵字開始搜尋</p></div>'; return; }
+
+  const matched = db.filter(e =>
+    e.q.toLowerCase().includes(kw.toLowerCase()) ||
+    e.a.toLowerCase().includes(kw.toLowerCase()) ||
+    (e.tag||'').toLowerCase().includes(kw.toLowerCase())
+  );
+
+  let html = '';
+  if(matched.length > 0) {
+    html += `<div class="results-header">找到 ${matched.length} 筆相關問答</div>`;
+    html += matched.map(e => cardHTML(e, kw)).join('');
+    html += '<hr class="divider">';
+  } else {
+    html += `<div class="results-header">知識庫中沒有完全符合的結果，以下是 AI 草擬回覆</div>`;
+  }
+
+  html += `<div class="ai-section">
+    <div class="ai-header">
+      <span class="ai-badge">AI 草擬回覆</span>
+      <span class="ai-note">根據知識庫內容自動生成，請確認後再複製</span>
+    </div>
+    <div class="ai-text ai-loading" id="aiText">生成中，請稍候...</div>
+    <div class="ai-actions" id="aiActions"></div>
+  </div>`;
+
+  area.innerHTML = html;
+  generateAI(kw, matched);
+}
+
+async function generateAI(keyword, matched) {
+  const context = matched.length > 0
+    ? matched.map(e=>`問：${e.q}\n答：${e.a}`).join('\n\n')
+    : '（知識庫中尚無相關問答，請根據一般直播電商系統常識回答）';
+
+  const prompt = `你是一個直播電商系統的客服人員，負責用 LINE 回答賣家對系統的問題。
+
+以下是知識庫中的相關問答供你參考：
+${context}
+
+賣家的問題是：「${keyword}」
+
+請根據上面的知識庫內容，草擬一段繁體中文的 LINE 回覆。語氣要親切、簡潔、專業，像真人客服一樣自然。如果知識庫沒有足夠資訊，請誠實說明並建議賣家提供更多細節。只輸出回覆內容本身，不要加任何說明或前綴。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '無法生成回覆，請直接參考上方問答。';
+    const el = document.getElementById('aiText');
+    if(!el) return;
+    el.classList.remove('ai-loading');
+    el.textContent = text;
+
+    const enc = encodeURIComponent(text);
+    const qEnc = encodeURIComponent(keyword);
+    document.getElementById('aiActions').innerHTML = `
+      <button class="btn btn-sm btn-copy" onclick="copyText('${enc}')">複製回覆，貼到 LINE</button>
+      <button class="btn btn-sm" onclick="saveAI('${qEnc}','${enc}')">存入知識庫</button>`;
+  } catch(e) {
+    const el = document.getElementById('aiText');
+    if(el) { el.classList.remove('ai-loading'); el.textContent = 'AI 功能暫時無法使用，請直接參考上方知識庫結果。'; }
+  }
+}
+
+// ── All page ─────────────────────────────────────────────
+function renderAll() {
+  const kw = (document.getElementById('allSearch').value || '').toLowerCase();
+  const filtered = kw ? db.filter(e =>
+    e.q.toLowerCase().includes(kw) ||
+    e.a.toLowerCase().includes(kw) ||
+    (e.tag||'').toLowerCase().includes(kw)
+  ) : db;
+  document.getElementById('allSubtitle').textContent = `共 ${filtered.length} 筆`;
+  document.getElementById('allResults').innerHTML = filtered.length
+    ? filtered.map(e => cardHTML(e, kw)).join('')
+    : '<div class="empty"><div style="font-size:32px">📭</div><p>沒有符合的問答</p></div>';
+}
+
+// ── Add ──────────────────────────────────────────────────
+function saveEntry() {
+  const q = document.getElementById('addQ').value.trim();
+  const a = document.getElementById('addA').value.trim();
+  const tag = document.getElementById('addTag').value.trim();
+  if(!q || !a) { showToast('請填寫問題和回答'); return; }
+  const today = new Date();
+  const date = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
+  db.unshift({ id: nextId++, q, a, tag: tag || '其他', date });
+  saveDB();
+  updateSidebar();
+  showToast('已儲存！');
+  clearAddForm();
+  goPage('all');
+}
+
+function clearAddForm() {
+  document.getElementById('addQ').value = '';
+  document.getElementById('addA').value = '';
+  document.getElementById('addTag').value = '';
+}
+
+function saveAI(qEnc, aEnc) {
+  const q = decodeURIComponent(qEnc);
+  const a = decodeURIComponent(aEnc);
+  const today = new Date();
+  const date = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
+  db.unshift({ id: nextId++, q, a, tag: 'AI生成', date });
+  saveDB();
+  updateSidebar();
+  showToast('已存入知識庫');
+}
+
+// ── Card ─────────────────────────────────────────────────
+function cardHTML(e, kw) {
+  const isAI = e.tag === 'AI生成';
+  const tagClass = isAI ? 'tag-ai' : 'tag-default';
+  const aEnc = encodeURIComponent(e.a);
+  return `<div class="card">
+    <div class="card-q">${highlight(escHTML(e.q), kw)}</div>
+    <div class="card-a">${highlight(escHTML(e.a), kw)}</div>
+    <div class="card-footer">
+      <div class="card-meta">
+        <span class="tag ${tagClass}">${escHTML(e.tag||'其他')}</span>
+        <span class="card-date">${e.date||''}</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-sm btn-copy" onclick="copyText('${aEnc}')">複製回答</button>
+        <button class="btn btn-sm" onclick="editEntry(${e.id})">編輯</button>
+        <button class="btn btn-sm" onclick="deleteEntry(${e.id})">刪除</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function escHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function highlight(html, kw) {
+  if (!kw) return html;
+  try {
+    var safe = kw.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+    var re = new RegExp(safe, 'gi');
+    return html.replace(re, function(m) { return '<mark class="hl">' + m + '</mark>'; });
+  } catch(e) { return html; }
+}
+
+function deleteEntry(id) {
+  if(!confirm('確定要刪除這筆問答嗎？')) return;
+  db = db.filter(e => e.id !== id);
+  saveDB();
+  updateSidebar();
+  if(currentPage === 'all') renderAll();
+  else doSearch();
+  showToast('已刪除');
+}
+
+function editEntry(id) {
+  const e = db.find(x=>x.id===id);
+  if(!e) return;
+  document.getElementById('addQ').value = e.q;
+  document.getElementById('addA').value = e.a;
+  document.getElementById('addTag').value = e.tag||'';
+  db = db.filter(x=>x.id!==id);
+  saveDB();
+  updateSidebar();
+  goPage('add');
+  showToast('已載入，修改後請重新儲存');
+}
+
+// ── Stats ─────────────────────────────────────────────────
+function renderStats() {
+  const tags = {};
+  db.forEach(e => { const t = e.tag||'其他'; tags[t] = (tags[t]||0)+1; });
+  const tagRows = Object.entries(tags).sort((a,b)=>b[1]-a[1])
+    .map(([t,c])=>`<tr><td style="padding:8px 0;font-size:13px;color:var(--text)">${t}</td><td style="padding:8px 0;font-size:13px;color:var(--text2);text-align:right">${c} 筆</td></tr>`).join('');
+
+  document.getElementById('statsContent').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num">${db.length}</div><div class="stat-label">總問答數</div></div>
+      <div class="stat-card"><div class="stat-num">${Object.keys(tags).length}</div><div class="stat-label">分類數</div></div>
+      <div class="stat-card"><div class="stat-num">${db.filter(e=>e.tag==='AI生成').length}</div><div class="stat-label">AI 生成問答</div></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:400px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px">各分類問答數</div>
+      <table style="width:100%;border-collapse:collapse">
+        <tr style="border-bottom:1px solid var(--border)"><th style="font-size:12px;color:var(--text2);font-weight:500;text-align:left;padding-bottom:8px">分類</th><th style="font-size:12px;color:var(--text2);font-weight:500;text-align:right;padding-bottom:8px">數量</th></tr>
+        ${tagRows}
+      </table>
+    </div>`;
+}
+
+// ── Export / Import ───────────────────────────────────────
+function exportData() {
+  document.getElementById('exportQACount').textContent = `${db.length} 筆問答`;
+  document.getElementById('exportImageCount').textContent = `${imgDB.length} 張圖片`;
+  document.getElementById('exportNoteCount').textContent = `${notesDB.length} 則筆記`;
+  document.getElementById('exportDialog').classList.add('open');
+}
+
+function closeExportDialog() {
+  document.getElementById('exportDialog').classList.remove('open');
+}
+
+function downloadSelectedExport() {
+  const includeQA = document.getElementById('exportQA').checked;
+  const includeImages = document.getElementById('exportImages').checked;
+  const includeNotes = document.getElementById('exportNotes').checked;
+  if(!includeQA && !includeImages && !includeNotes) {
+    showToast('請至少選擇一種要匯出的內容');
+    return;
+  }
+  const backup = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    includes: { qa: includeQA, images: includeImages, notes: includeNotes }
+  };
+  if(includeQA) backup.qa = db;
+  if(includeImages) backup.images = imgDB;
+  if(includeNotes) backup.notes = notesDB;
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `客服知識庫備份_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  closeExportDialog();
+  showToast('備份已下載');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      const importedQA = Array.isArray(imported) ? imported : imported.qa;
+      const importedImages = Array.isArray(imported) ? null : imported.images;
+      const importedNotes = Array.isArray(imported) ? null : imported.notes;
+      let msg = [];
+
+      if(Array.isArray(importedQA)) {
+        const merged = [...importedQA];
+        db.forEach(e => { if(!merged.find(x=>x.id===e.id)) merged.push(e); });
+        db = merged.sort((a,b)=>b.id-a.id);
+        nextId = db.length ? Math.max(...db.map(e=>e.id)) + 1 : 1;
+        saveDB();
+        msg.push(`${importedQA.length} 筆問答`);
+      }
+
+      if(Array.isArray(importedImages)) {
+        const mergedImages = [...importedImages];
+        imgDB.forEach(img => { if(!mergedImages.find(x=>String(x.id)===String(img.id))) mergedImages.push(img); });
+        imgDB = mergedImages;
+        saveImgDB();
+        msg.push(`${importedImages.length} 張圖片`);
+      }
+
+      if(Array.isArray(importedNotes)) {
+        const mergedNotes = [...importedNotes];
+        notesDB.forEach(n => { if(!mergedNotes.find(x=>String(x.id)===String(n.id))) mergedNotes.push(n); });
+        notesDB = mergedNotes.sort((a,b)=>(b.id||0)-(a.id||0));
+        saveNotes();
+        renderNotes();
+        msg.push(`${importedNotes.length} 則筆記`);
+      }
+
+      if(!msg.length) throw new Error();
+      updateSidebar();
+      updateImgCount();
+      renderImages();
+      showToast(`已匯入 ${msg.join('、')}`);
+      if(Array.isArray(importedQA)) goPage('all');
+      else if(Array.isArray(importedImages)) goPage('images');
+      else goPage('notes');
+    } catch(err) { showToast('匯入失敗，請確認檔案格式'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ── Utils ─────────────────────────────────────────────────
+function copyText(enc) {
+  const text = decodeURIComponent(enc);
+  navigator.clipboard.writeText(text).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  showToast('已複製！直接貼到 LINE');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+
+// ── Image Library ─────────────────────────────────────────
+const IMG_KEY = 'cs_img_v1';
+
+function loadImgDB() {
+  try { const r = localStorage.getItem(IMG_KEY); return r ? JSON.parse(r) : []; }
+  catch(e) { return []; }
+}
+function saveImgDB() {
+  try { localStorage.setItem(IMG_KEY, JSON.stringify(imgDB)); } catch(e) {}
+  scheduleCloudSave();
+}
+
+let imgDB = loadImgDB();
+
+function updateImgCount() {
+  const el = document.getElementById('imgCount');
+  if(el) el.textContent = imgDB.length;
+}
+
+function imgDragOver(e) {
+  e.preventDefault();
+  document.getElementById('imgDropZone').classList.add('img-drop-active');
+}
+function imgDragLeave(e) {
+  document.getElementById('imgDropZone').classList.remove('img-drop-active');
+}
+function imgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgDropZone').classList.remove('img-drop-active');
+  handleImgFiles(e.dataTransfer.files);
+}
+function imgFileSelected(e) { handleImgFiles(e.target.files); e.target.value=''; }
+
+function handleImgFiles(files) {
+  let count = 0;
+  const total = files.length;
+  if(!total) return;
+  Array.from(files).forEach(file => {
+    if(!file.type.startsWith('image/')) { count++; if(count===total) { saveImgDB(); updateImgCount(); renderImages(); showToast(`已上傳 ${imgDB.length} 張圖片`); } return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      imgDB.unshift({ id: Date.now() + Math.random(), name: file.name, data: ev.target.result, date: new Date().toLocaleDateString('zh-TW') });
+      count++;
+      if(count === total) { saveImgDB(); updateImgCount(); renderImages(); showToast(`已上傳 ${total} 張圖片`); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderImages() {
+  const kw = (document.getElementById('imgSearch')||{value:''}).value.trim().toLowerCase();
+  const filtered = kw ? imgDB.filter(i=>i.name.toLowerCase().includes(kw)) : imgDB;
+  const area = document.getElementById('imgResults');
+  if(!area) return;
+  if(!imgDB.length) {
+    area.innerHTML = '<div class="empty"><div style="font-size:32px">🖼</div><p>還沒有圖片，拖曳或點擊上方區域上傳</p></div>';
+    return;
+  }
+  if(!filtered.length) {
+    area.innerHTML = '<div class="empty"><div style="font-size:32px">🔍</div><p>找不到符合的圖片</p></div>';
+    return;
+  }
+  area.innerHTML = `<div style="font-size:12px;color:var(--text3);margin-bottom:12px">共 ${filtered.length} 張圖片${kw?' (已篩選)':''}</div>
+    <div class="img-grid">${filtered.map(img => `
+    <div class="img-card">
+      <img src="${img.data}" alt="${escHTML(img.name)}" loading="lazy" onmouseenter="showPreview(event,'${img.id}')" onmouseleave="hidePreview()">
+      <div class="img-card-footer">
+        <div class="img-name" title="${escHTML(img.name)}">${escHTML(img.name)}</div>
+        <div class="img-actions">
+          <button class="btn btn-sm btn-copy" style="flex:1;font-size:11px;padding:4px 6px" onclick="copyImg('${img.id}')">複製</button>
+          <button class="btn btn-sm" style="font-size:11px;padding:4px 8px" onclick="deleteImg('${img.id}')">刪</button>
+        </div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+async function copyImg(id) {
+  const img = imgDB.find(x=>String(x.id)===String(id));
+  if(!img) return;
+  try {
+    const res = await fetch(img.data);
+    const blob = await res.blob();
+    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+    showToast('圖片已複製！直接貼到 LINE');
+  } catch(e) {
+    // fallback: open in new tab for manual copy
+    const w = window.open();
+    w.document.write('<img src="'+img.data+'" style="max-width:100%">');
+    showToast('請在新視窗中右鍵複製圖片');
+  }
+}
+
+function deleteImg(id) {
+  if(!confirm('確定刪除這張圖片？')) return;
+  imgDB = imgDB.filter(x=>String(x.id)!==String(id));
+  saveImgDB();
+  updateImgCount();
+  renderImages();
+  showToast('已刪除');
+}
+
+// ── Hover Preview ─────────────────────────────────────────
+function showPreview(e, id) {
+  const img = imgDB.find(x => String(x.id) === String(id));
+  if (!img) return;
+  const pv = document.getElementById('imgPreview');
+  document.getElementById('previewImg').src = img.data;
+  document.getElementById('previewName').textContent = img.name;
+  pv.classList.add('open');
+  positionPreview(e);
+}
+
+function positionPreview(e) {
+  const pv = document.getElementById('imgPreview');
+  if (!pv.classList.contains('open')) return;
+  const margin = 16;
+  const pvW = 732, pvH = 760;
+  let x = e.clientX + 20;
+  let y = e.clientY - pvH / 2;
+  if (x + pvW > window.innerWidth - margin) x = e.clientX - pvW - 20;
+  if (y < margin) y = margin;
+  if (y + pvH > window.innerHeight - margin) y = window.innerHeight - pvH - margin;
+  pv.style.left = x + 'px';
+  pv.style.top = y + 'px';
+}
+
+function hidePreview() {
+  document.getElementById('imgPreview').classList.remove('open');
+}
+
+document.addEventListener('mousemove', e => {
+  if (document.getElementById('imgPreview').classList.contains('open')) positionPreview(e);
+});
+
+// ── Notes ─────────────────────────────────────────────────
+const NOTES_KEY = 'cs_notes_v1';
+function loadNotes() { try { const r = localStorage.getItem(NOTES_KEY); return r ? JSON.parse(r) : []; } catch(e) { return []; } }
+function saveNotes() {
+  localStorage.setItem(NOTES_KEY, JSON.stringify(notesDB));
+  scheduleCloudSave();
+}
+let notesDB = loadNotes();
+let editingNoteId = null;
+
+function renderNotes() {
+  const area = document.getElementById('notesArea');
+  if(!area) return;
+  let html = '';
+  if(editingNoteId === 'new') {
+    html += noteEditHTML(null);
+  }
+  if(!notesDB.length && editingNoteId !== 'new') {
+    html += '<div class="empty"><div style="font-size:32px">📝</div><p>還沒有筆記，點右上角「+ 新增筆記」開始記錄</p></div>';
+  } else {
+    html += notesDB.map(n => {
+      if(editingNoteId === n.id) return noteEditHTML(n);
+      return `<div class="note-card">
+        <div class="note-title">${escHTML(n.title||'（無標題）')}</div>
+        <div class="note-body">${escHTML(n.body||'')}</div>
+        <div class="note-footer">
+          <span class="note-date">${n.date||''}</span>
+          <div class="note-actions">
+            <button class="btn btn-sm" onclick="editNote(${n.id})">編輯</button>
+            <button class="btn btn-sm" onclick="deleteNote(${n.id})">刪除</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  area.innerHTML = html;
+}
+
+function noteEditHTML(n) {
+  const isNew = !n;
+  return `<div class="note-edit-area">
+    <input type="text" id="noteTitle" placeholder="標題（選填）" value="${n ? escHTML(n.title||'') : ''}">
+    <textarea id="noteBody" rows="6" placeholder="寫下你的筆記...">${n ? escHTML(n.body||'') : ''}</textarea>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-green" onclick="saveNote(${n ? n.id : 0}, ${n ? 'false' : 'true'})">儲存</button>
+      <button class="btn" onclick="cancelNote()">取消</button>
+    </div>
+  </div>`;
+}
+
+function addNote() {
+  editingNoteId = 'new';
+  renderNotes();
+}
+
+function editNote(id) {
+  editingNoteId = id;
+  renderNotes();
+}
+
+function cancelNote() {
+  editingNoteId = null;
+  renderNotes();
+}
+
+function saveNote(id, isNew) {
+  const title = (document.getElementById('noteTitle').value||'').trim();
+  const body = (document.getElementById('noteBody').value||'').trim();
+  if(!body && !title) { showToast('請輸入筆記內容'); return; }
+  const today = new Date();
+  const date = today.getFullYear() + '/' + String(today.getMonth()+1).padStart(2,'0') + '/' + String(today.getDate()).padStart(2,'0');
+  if(isNew) {
+    notesDB.unshift({ id: Date.now(), title, body, date });
+  } else {
+    const n = notesDB.find(x=>x.id===id);
+    if(n) { n.title = title; n.body = body; n.date = date; }
+  }
+  editingNoteId = null;
+  saveNotes();
+  renderNotes();
+  showToast('筆記已儲存');
+}
+
+function deleteNote(id) {
+  if(!confirm('確定刪除這則筆記？')) return;
+  notesDB = notesDB.filter(x=>x.id!==id);
+  saveNotes();
+  renderNotes();
+  showToast('已刪除');
+}
+
+// ── Init ──────────────────────────────────────────────────
+updateSidebar();
+updateImgCount();
+document.getElementById('searchResults').innerHTML = '<div class="empty"><div style="font-size:32px">🔍</div><p>輸入關鍵字開始搜尋</p></div>';
+initCloudSync();
+</script>
+</body>
+</html>
