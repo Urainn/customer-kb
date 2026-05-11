@@ -598,9 +598,6 @@
       <span class="cloud-mode readonly" id="cloudMode">唯讀模式</span>
       <span class="cloud-status" id="cloudStatus">準備同步...</span>
       <button class="cloud-reload" id="cloudModeToggle" onclick="toggleCloudAdmin()">切換管理模式</button>
-      <button class="cloud-reload" onclick="startCloudEdit()">編輯雲端資料</button>
-      <button class="cloud-reload" onclick="manualUploadCloud()">上傳到雲端</button>
-      <button class="cloud-reload" onclick="restorePrivateLocal()">恢復本機資料</button>
       <button class="cloud-reload" onclick="reloadFromCloud()">重新從雲端載入</button>
     </div>
   </div>
@@ -746,11 +743,8 @@ const SUPABASE_KEY = 'sb_publishable_TvH2Tm568Wy-Tnag5Je45A_kj8NLahl';
 const CLOUD_TABLE = 'kb_data';
 const CLOUD_ROW_ID = 'main';
 const CLOUD_ADMIN_KEY = 'cs_cloud_admin_v1';
-const CLOUD_EDIT_KEY = 'cs_cloud_edit_mode_v1';
-const PRIVATE_BACKUP_KEY = 'cs_private_backup_v1';
 let cloudReady = false;
 let cloudSaveTimer = null;
-let privateBackupData = null;
 
 if(location.hash === '#admin') {
   localStorage.setItem(CLOUD_ADMIN_KEY, '1');
@@ -765,17 +759,11 @@ function canWriteCloud() {
   return localStorage.getItem(CLOUD_ADMIN_KEY) === '1';
 }
 
-function isCloudEditMode() {
-  return localStorage.getItem(CLOUD_EDIT_KEY) === '1';
-}
-
 function updateCloudModeBadge() {
   const el = document.getElementById('cloudMode');
   if(!el) return;
   const admin = canWriteCloud();
-  el.textContent = admin
-    ? (isCloudEditMode() ? '管理模式：正在編輯雲端資料' : '管理模式：未進入雲端編輯')
-    : '唯讀模式：只存本機';
+  el.textContent = admin ? '管理模式：修改會同步雲端' : '一般模式：只存本機';
   el.classList.toggle('admin', admin);
   el.classList.toggle('readonly', !admin);
   const btn = document.getElementById('cloudModeToggle');
@@ -785,18 +773,17 @@ function updateCloudModeBadge() {
 function toggleCloudAdmin() {
   if(canWriteCloud()) {
     localStorage.removeItem(CLOUD_ADMIN_KEY);
-    localStorage.removeItem(CLOUD_EDIT_KEY);
     clearTimeout(cloudSaveTimer);
     updateCloudModeBadge();
-    setCloudStatus('已切回唯讀模式：修改只存本機');
+    setCloudStatus('已切回一般模式：修改只存本機');
     return;
   }
 
-  const ok = confirm('切換成管理模式後，仍然不會自動上傳；只有按「上傳到雲端」才會更新雲端。確定要開啟嗎？');
+  const ok = confirm('切換成管理模式後，你接下來的新增、修改、刪除會自動同步到雲端。確定要開啟嗎？');
   if(!ok) return;
   localStorage.setItem(CLOUD_ADMIN_KEY, '1');
   updateCloudModeBadge();
-  setCloudStatus('管理模式已開啟：請先按「編輯雲端資料」再上傳');
+  setCloudStatus('管理模式已開啟：之後修改會同步雲端');
 }
 
 function loadDB() {
@@ -907,92 +894,20 @@ async function uploadCloudNow() {
   setCloudStatus(`雲端已同步 ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`);
 }
 
-async function manualUploadCloud() {
-  if(!canWriteCloud()) {
-    showToast('請先切換管理模式');
-    setCloudStatus('唯讀模式：不能上傳雲端');
-    return;
-  }
-  if(!isCloudEditMode()) {
-    showToast('請先按「編輯雲端資料」');
-    setCloudStatus('為避免上傳本機私用資料，請先按「編輯雲端資料」');
-    return;
-  }
-  const ok = confirm('確定要把目前的雲端編輯內容上傳嗎？這會覆蓋目前雲端版本。');
-  if(!ok) return;
-  try {
-    await uploadCloudNow();
-    showToast('已上傳到雲端');
-  } catch(err) {
-    console.error(err);
-    setCloudStatus('上傳失敗，請稍後再試', true);
-    showToast('上傳失敗');
-  }
-}
-
-async function startCloudEdit() {
-  if(!canWriteCloud()) {
-    showToast('請先切換管理模式');
-    setCloudStatus('請先切換管理模式，才能編輯雲端資料');
-    return;
-  }
-  const ok = confirm('會先備份目前本機資料，然後載入雲端資料讓你編輯。你的本機私用資料不會被上傳。要繼續嗎？');
-  if(!ok) return;
-  try {
-    privateBackupData = JSON.parse(JSON.stringify(currentBackupData()));
-    try {
-      localStorage.setItem(PRIVATE_BACKUP_KEY, JSON.stringify({
-        qa: privateBackupData.qa || [],
-        notes: privateBackupData.notes || [],
-        images: []
-      }));
-    } catch(e) {}
-    localStorage.setItem(CLOUD_EDIT_KEY, '1');
-    updateCloudModeBadge();
-    const cloudData = await loadCloudData();
-    if(!hasBackupContent(cloudData)) throw new Error('empty cloud data');
-    applyCloudData(cloudData, false);
-    setCloudStatus('正在編輯雲端資料：修改後按「上傳到雲端」');
-    showToast('已載入雲端資料');
-  } catch(err) {
-    console.error(err);
-    localStorage.removeItem(CLOUD_EDIT_KEY);
-    updateCloudModeBadge();
-    setCloudStatus('載入雲端資料失敗', true);
-  }
-}
-
-function restorePrivateLocal() {
-  const raw = localStorage.getItem(PRIVATE_BACKUP_KEY);
-  if(!privateBackupData && !raw) {
-    showToast('沒有可恢復的本機備份');
-    return;
-  }
-  const ok = confirm('確定要恢復剛才備份的本機資料嗎？目前畫面上的雲端編輯內容會被本機備份取代。');
-  if(!ok) return;
-  try {
-    const data = privateBackupData || JSON.parse(raw);
-    applyCloudData(data, false);
-    localStorage.removeItem(CLOUD_EDIT_KEY);
-    updateCloudModeBadge();
-    setCloudStatus('已恢復本機資料；目前不會上傳雲端');
-    showToast('已恢復本機資料');
-  } catch(err) {
-    console.error(err);
-    setCloudStatus('恢復本機資料失敗', true);
-  }
-}
-
 function scheduleCloudSave() {
   if(!cloudReady) return;
   if(!canWriteCloud()) {
-    setCloudStatus('唯讀模式：已存本機，未上傳雲端');
+    setCloudStatus('一般模式：已存本機，未上傳雲端');
     return;
   }
   clearTimeout(cloudSaveTimer);
-  setCloudStatus(isCloudEditMode()
-    ? '雲端編輯中：已存本機，按「上傳到雲端」才會同步'
-    : '管理模式：本機資料不會上傳，請先按「編輯雲端資料」');
+  setCloudStatus('管理模式：等待同步...');
+  cloudSaveTimer = setTimeout(() => {
+    uploadCloudNow().catch(err => {
+      console.error(err);
+      setCloudStatus('雲端同步失敗，仍已存本機', true);
+    });
+  }, 900);
 }
 
 async function reloadFromCloud() {
@@ -1019,12 +934,10 @@ async function initCloudSync() {
     if(hasBackupContent(cloudData)) {
       applyCloudData(cloudData, false);
       cloudReady = true;
-      setCloudStatus(canWriteCloud()
-        ? (isCloudEditMode() ? '正在編輯雲端資料：按上傳才會同步' : '管理模式：已載入雲端，請先按「編輯雲端資料」')
-        : '唯讀模式：已載入雲端');
+      setCloudStatus(canWriteCloud() ? '管理模式：已載入雲端，之後修改會同步' : '一般模式：已載入雲端');
     } else {
       cloudReady = true;
-      setCloudStatus(canWriteCloud() ? '管理模式：雲端目前沒有資料，按上傳可建立' : '唯讀模式：雲端目前沒有資料');
+      setCloudStatus(canWriteCloud() ? '管理模式：雲端目前沒有資料，之後修改會同步' : '一般模式：雲端目前沒有資料');
     }
   } catch(err) {
     console.error(err);
